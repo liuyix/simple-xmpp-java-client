@@ -1,0 +1,28 @@
+To: jack@localhost
+ThreadID: uaXGa0
+Msg:
+null
+XML:
+<message id="jack@localhost__mick@localhost__L3Ppc" to="mick@localhost/Smack" from="jack@localhost"><thread>uaXGa0</thread><event xmlns='http://jabber.org/protocol/pubsub#event'><items node='http://jabber.org/protocol/tune'><item id='lq8E44821n2MsC6'><tune xmlns="http://jabber.org/protocol/tune"></tune></item></items></event><delay xmlns="urn:xmpp:delay" stamp="2011-05-23T05:04:39.510Z"></delay><addresses xmlns="http://jabber.org/protocol/address"><address type="replyto" jid="jack@localhost/hello"/></addresses></message>
+
+To: regtest4@localhost
+ThreadID: uaXGa1
+Msg:
+null
+XML:
+<message id="regtest4@localhost__mick@localhost__ymt0S" to="mick@localhost/Smack" from="regtest4@localhost"><thread>uaXGa1</thread><event xmlns='http://jabber.org/protocol/pubsub#event'><items node='http://jabber.org/protocol/tune'><item id='7ivXIyrhQeLuIdp'><tune xmlns="http://jabber.org/protocol/tune"></tune></item></items></event><delay xmlns="urn:xmpp:delay" stamp="2011-05-23T05:04:33.674Z"></delay><addresses xmlns="http://jabber.org/protocol/address"><address type="replyto" jid="regtest4@localhost/pidgin"/></addresses></message>
+
+To: jack@localhost
+ThreadID: uaXGa0
+Msg:
+离线信息
+XML:
+<message id="purple3090e1d" to="mick@localhost" from="jack@localhost/hello" type="chat"><body>离线信息</body><thread>uaXGa0</thread><active xmlns="http://jabber.org/protocol/chatstates" /><delay xmlns="urn:xmpp:delay" stamp="2011-05-23T06:03:46.955Z" from="localhost"></delay><x xmlns="jabber:x:delay" stamp="20110523T06:03:46" from="localhost"></x></message>
+
+To: jack@localhost
+ThreadID: uaXGa2
+Msg:
+hello
+XML:
+<message id="purple3090e1e" to="mick@localhost/Smack" from="jack@localhost/hello" type="chat"><body>hello</body><thread>uaXGa2</thread></message>
+
