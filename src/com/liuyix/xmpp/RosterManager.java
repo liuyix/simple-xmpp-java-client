@@ -22,7 +22,7 @@ import org.jivesoftware.smack.packet.Presence;
 //TODO 重构去掉所有的System.out
 //TODO 增加功能：组管理
 public class RosterManager {
-	Roster roster;
+	Roster roster = null;
 	Connection conn;
 	
 	
@@ -182,5 +182,9 @@ public class RosterManager {
 	private boolean checkRosterWriter(BufferedWriter writer){
 		return writer==null||roster==null ?
 				false:true;
+	}
+	
+	public Roster getRoster(){
+		return roster;
 	}
 }

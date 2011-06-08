@@ -12,7 +12,7 @@ import org.jivesoftware.smack.packet.PacketExtension;
 
 //import org.jivesoftware.smack.Connection;
 
-class Util {
+public class Util {
 //	static BufferedWriter writer = new BufferedWriter(new FileWriter(new File("JClient.log")));
 	private static String username;
 	public static String getUsername(){

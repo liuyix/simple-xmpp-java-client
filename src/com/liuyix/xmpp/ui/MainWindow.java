@@ -1,109 +1,299 @@
 package com.liuyix.xmpp.ui;
 
-import org.eclipse.jface.action.MenuManager;
-import org.eclipse.jface.action.StatusLineManager;
-import org.eclipse.jface.action.ToolBarManager;
-import org.eclipse.jface.window.ApplicationWindow;
+/**
+ * 使用Event-Listener方法完成界面和底层的交互：
+ * 若界面跟着底层，那么就实现一个监听端口，同时在底层更新时调用该端口，反之也一样！
+ * **/
+
+
+import java.awt.event.MouseAdapter;
+import java.util.Collection;
+
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.events.VerifyEvent;
+import org.eclipse.swt.events.VerifyListener;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowData;
+import org.eclipse.swt.layout.RowLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeItem;
+import org.jivesoftware.smack.Roster;
+import org.jivesoftware.smack.RosterEntry;
+import org.jivesoftware.smack.RosterGroup;
 
-public class MainWindow extends ApplicationWindow {
+import com.liuyix.xmpp.PresenceManager;
+import com.liuyix.xmpp.Util;
 
-	/**
-	 * Create the application window.
-	 */
+
+public class MainWindow {
+
+	protected Shell shell;
+
+	private String jid;
+	private String username;
+	private Roster roster;
+	
+	public MainWindow(String jid, String username, Roster roster) {
+		super();
+		this.jid = jid;
+		this.username = username;
+		this.roster = roster;
+	}
+	
+	/** 
+	 * @deprecated 只可用于测试！
+	 * */
 	public MainWindow() {
-		super(null);
-		setShellStyle(SWT.SYSTEM_MODAL);
-		createActions();
-		addToolBar(SWT.FLAT | SWT.WRAP);
-		addMenuBar();
-		addStatusLine();
-	}
+		super();
+	}	
 
 	/**
-	 * Create contents of the application window.
-	 * @param parent
-	 */
-	@Override
-	protected Control createContents(Composite parent) {
-		Composite container = new Composite(parent, SWT.NONE);
-
-		return container;
-	}
-
-	/**
-	 * Create the actions.
-	 */
-	private void createActions() {
-		// Create the actions
-	}
-
-	/**
-	 * Create the menu manager.
-	 * @return the menu manager
-	 */
-	@Override
-	protected MenuManager createMenuManager() {
-		MenuManager menuManager = new MenuManager("menu");
-		return menuManager;
-	}
-
-	/**
-	 * Create the toolbar manager.
-	 * @return the toolbar manager
-	 */
-	@Override
-	protected ToolBarManager createToolBarManager(int style) {
-		ToolBarManager toolBarManager = new ToolBarManager(style);
-		return toolBarManager;
-	}
-
-	/**
-	 * Create the status line manager.
-	 * @return the status line manager
-	 */
-	@Override
-	protected StatusLineManager createStatusLineManager() {
-		StatusLineManager statusLineManager = new StatusLineManager();
-		return statusLineManager;
-	}
-
-	/**
-	 * Launch the application.
-	 * @param args
-	 */
-	public static void main(String args[]) {
+	 * debug only
+	 * 
+	 * **/
+	public static void main(String[] args) {
 		try {
 			MainWindow window = new MainWindow();
-			window.setBlockOnOpen(true);
 			window.open();
-			Display.getCurrent().dispose();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
+
+
 	/**
-	 * Configure the shell.
-	 * @param newShell
+	 * Open the window.
 	 */
-	@Override
-	protected void configureShell(Shell newShell) {
-		super.configureShell(newShell);
-		newShell.setText("New Application");
+	public void open() {
+		Display display = Display.getDefault();
+		
+		shell = new Shell(display,SWT.SYSTEM_MODAL | SWT.SHELL_TRIM);
+		
+		shell.setSize(300, 600);
+		shell.setText("JClient");
+		shell.setImage(new Image(Display.getDefault(), "icon00.png"));
+		shell.setLayout(new FillLayout(SWT.VERTICAL));
+		
+//		//FUTURE 设置位置
+//		Rectangle rec = display.getPrimaryMonitor().getBounds();
+//		shell.setLocation(rec.height, rec.width);
+		
+		createMenubar();
+		
+		createContents();
+		shell.open();
+		shell.layout();
+		while (!shell.isDisposed()) {
+			if (!display.readAndDispatch()) {
+				display.sleep();
+			}
+		}
+	}
+
+	private void createMenubar() {
+		//新建一个menuBar并加到shell上面
+		Menu menuBar = new Menu(shell, SWT.BAR);		
+		shell.setMenuBar(menuBar);
+		
+		createMainmenu(menuBar);	
+	}
+
+	private void createMainmenu(Menu menuBar) {
+		//新建一个MenuItem,加到MenuBar上
+		MenuItem item = new MenuItem(menuBar, SWT.CASCADE);
+		item.setText("主菜单");
+		
+		//新建MenuItem要弹出的Menu，并设置其对应关系
+		Menu menu = new Menu(shell,SWT.DROP_DOWN);
+		item.setMenu(menu);
+		
+		MenuItem subItem = new MenuItem(menu,SWT.NONE);
+		subItem.setText("设置");
+		
+		
+		subItem = new MenuItem(menu,SWT.SEPARATOR);
+		
+		subItem = new MenuItem(menu,SWT.NONE);
+		subItem.setText("退出");
+		subItem.addSelectionListener(new SelectionAdapter() {
+			//TODO 菜单项“退出”操作
+		});
 	}
 
 	/**
-	 * Return the initial size of the window.
+	 * Create contents of the window.
 	 */
-	@Override
-	protected Point getInitialSize() {
-		return new Point(450, 300);
+	protected void createContents() {
+		SashForm form = new SashForm(shell,SWT.BORDER | SWT.VERTICAL);
+		form.setLayout(new FillLayout());
+		
+		createUserPanel(form);
+		createRosterPanel(form);
+		
+		form.setWeights(new int[]{20,80});
+		
 	}
+
+	private void createUserPanel(SashForm form) {
+		//TODO 获取用户的信息予以显示
+		Image image = getUserImage();
+		String userInfo = getUserInfo();
+		Composite composite = new Composite(form, SWT.NONE);
+		GridLayout gridLayout = new GridLayout(2,false);
+		gridLayout.marginHeight = 0;
+		gridLayout.marginWidth = 0;
+		gridLayout.horizontalSpacing = 0;
+		composite.setLayout(gridLayout);
+		
+		Label userImageLbl = new Label(composite,SWT.NONE | SWT.SHADOW_OUT);
+//		GridData gridData = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_FILL);
+		GridData gridData = new GridData(SWT.FILL,SWT.FILL,false,true,1,3);
+//		gridData.heightHint = 40;
+		gridData.widthHint = image.getBounds().width + 10;
+		userImageLbl.setLayoutData(gridData);
+		userImageLbl.setImage(image);
+		userImageLbl.addMouseListener(new MouseListener() {			
+			@Override
+			public void mouseUp(MouseEvent e) {				
+			}
+			
+			@Override
+			public void mouseDown(MouseEvent e) {				
+			}
+			
+			@Override
+			public void mouseDoubleClick(MouseEvent e) {
+				//TODO 显示用户信息的对话框
+				Util.showDebugMsg("此处应该显示用户信息编辑的对话框！");
+			}
+		});
+//		
+////		userImageLbl.setVisible(false);
+//		
+		Label usernameLbl = new Label(composite,SWT.NONE);
+		gridData = new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1);
+//		gridData.heightHint = 20;
+//		gridData.widthHint = 50;
+		usernameLbl.setLayoutData(gridData);
+		usernameLbl.setText(userInfo);
+		
+		
+		final Text userStatusTxt = new Text(composite,SWT.SINGLE | SWT.BORDER | SWT.LEFT);
+		userStatusTxt.setText(getStatusInfo());
+		userStatusTxt.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
+		userStatusTxt.addTraverseListener(new TraverseListener() {
+			
+			@Override
+			public void keyTraversed(TraverseEvent e) {
+				if(e.detail == SWT.TRAVERSE_RETURN){
+					//TODO 更新状态
+					String status = userStatusTxt.getText();
+					System.out.println("更新状态！更新状态为" + status);
+				}				
+			}
+		});
+		
+		final Combo statusCmb = new Combo(composite,SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
+		statusCmb.setLayoutData(new GridData(SWT.FILL, SWT.TOP, false, false, 1, 1));
+		statusCmb.setItems(PresenceManager.PRESENCE);
+		statusCmb.select(0);
+		statusCmb.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				//TODO 用户状态改变时的操作
+				Util.showDebugMsg("你选择了" + PresenceManager.PRESENCE[statusCmb.getSelectionIndex()]);
+			}
+		});
+		
+	}
+	
+	// TODO 获取用户的状态信息文本
+	private String getStatusInfo() {
+		
+		return "not set";
+	}
+
+	// TODO 获取用户名
+	private String getUserInfo() {		
+		return this.username + "(" + this.jid + ")";
+	}
+
+	/**
+	 * 该方法会重新调整图像大小
+	 * TODO 获取用户图像，若没有则返回默认图像
+	 * */
+	private Image getUserImage() {
+		Image userImage = new Image(Display.getCurrent(), "im-1.png");
+		Image scaledImage = new Image(Display.getCurrent(),userImage.getImageData().scaledTo(80, 80));
+		userImage.dispose();
+		return scaledImage;
+	}
+	
+	// TODO 联系人列表
+	private void createRosterPanel(SashForm form) {
+		Tree tree = new Tree(form,SWT.BORDER | SWT.VIRTUAL);
+		
+		int rootItemCnt = 10,subRootItemCnt = 30;
+//		TreeItem item,subItem;
+//		for(int i=0;i<rootItemCnt;++i){
+//			item = new TreeItem(tree,SWT.NULL);
+//			item.setText("好友组" + i);
+//			for(int j=0;j<subRootItemCnt;++j){
+//				subItem = new TreeItem(item,SWT.NULL);
+//				subItem.setText("好友-" + i + j);
+//			}
+//		}	
+		updateRoster(tree);
+	}
+	
+	/**
+	 * 根据成员roster更新树结构
+	 * */
+	private void updateRoster(Tree tree) {
+		if(this.roster == null){
+			return;			
+		}
+		tree.clearAll(true);
+		Collection<RosterEntry> entries;
+		Collection<RosterGroup> groups;
+//		entries = roster.getEntries();
+		groups = roster.getGroups();
+		TreeItem treeItem,subTreeItem;
+		for(RosterGroup group : groups){
+			treeItem = new TreeItem(tree,SWT.NULL);
+			treeItem.setText(group.getName());
+			for(RosterEntry entry : group.getEntries()){
+				subTreeItem = new TreeItem(treeItem, SWT.NULL);
+				subTreeItem.setText(entry.getName());
+			}
+		}
+		
+	}
+	
+	
+
 
 }

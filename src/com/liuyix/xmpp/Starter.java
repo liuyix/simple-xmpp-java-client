@@ -21,6 +21,8 @@ import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.XMPPConnection;
 
 import com.liuyix.xmpp.ConversationManager.Type; //import org.jivesoftware.smack.packet.IQ;
+import com.liuyix.xmpp.ui.LoginListener;
+import com.liuyix.xmpp.ui.LoginWindow;
 //import org.jivesoftware.smack.packet.Message;
 //import org.jivesoftware.smack.packet.Packet;
 //import org.jivesoftware.smack.packet.PacketExtension;
@@ -59,7 +61,7 @@ public class Starter {
 	ConversationManager conversation;
 	Scanner scanner;
 	String mucAddr;
-
+	LoginWindow loginWindow;
 	/**
 	 * 配置socks5代理
 	 * 
@@ -481,7 +483,25 @@ public class Starter {
 
 	public static void main(String[] args) {
 		// 
-		new Starter("mick", "mick").run(true, "localhost");
+		new Starter("regTest4", "regTest4").run(true, "localhost");
+//		try {
+//			LoginWindow loginWindow = new LoginWindow();
+//			loginWindow.addLoginListener(new LoginListener(){
+//
+//				@Override
+//				public void handleLoginInfo(String name, String passwd,
+//						String server) {
+//					//
+//					
+//				}
+//				
+//			});
+//			loginWindow.open();
+//			
+//		} catch (Exception e) {
+//			//
+//			e.printStackTrace();
+//		}
 		// 服务发现
 		// 调出discoMangager
 		// ServiceDiscoveryManager discoManager =
