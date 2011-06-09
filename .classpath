@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="lib" path="lib/smack.jar"/>
 	<classpathentry kind="lib" path="lib/smackx-debug.jar"/>
 	<classpathentry kind="lib" path="lib/smackx-jingle.jar"/>
@@ -18,5 +17,8 @@
 	<classpathentry kind="lib" path="/home/cnliuyix/lib/jface-required-lib/org.eclipse.jface_3.6.2.M20110210-1200.jar"/>
 	<classpathentry kind="lib" path="/home/cnliuyix/lib/jface-required-lib/org.eclipse.osgi_3.6.2.R36x_v20110210.jar"/>
 	<classpathentry kind="lib" path="/home/cnliuyix/lib/jface-required-lib/org.eclipse.ui.workbench_3.6.2.M20110210-1200.jar"/>
+	<classpathentry kind="lib" path="/usr/lib/eclipse/plugins/org.eclipse.core.databinding_1.2.0.M20090819-0800.jar" sourcepath="/usr/lib/eclipse/plugins/org.eclipse.core.databinding.source_1.2.0.M20090819-0800.jar"/>
+	<classpathentry kind="lib" path="/usr/lib/eclipse/plugins/com.ibm.icu_4.0.1.v20100125.jar" sourcepath="/usr/lib/eclipse/plugins/com.ibm.icu_4.0.1.v20100125.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -66,57 +66,6 @@ import org.jivesoftware.smackx.packet.MUCInitialPresence;
  */
 public class ConversationManager {
 
-	/**
-	 * 截获所有的非Error类型的Message用以存储
-	 *
-	 */
-	private class AllIncomingMsgListener implements PacketListener {
-
-		/* (non-Javadoc)
-		 * @see org.jivesoftware.smack.PacketListener#processPacket(org.jivesoftware.smack.packet.Packet)
-		 */
-		@Override
-		public void processPacket(Packet packet) {
-			Message msg = (Message)packet;
-			msgStorageManager.store(msg);
-		}
-	}
-
-	/**
-	 * 截获所有的发出去的msg信息，用以存储
-	 * @author cnliuyix
-	 *
-	 */
-	private class AllOutgoingMsgListener implements PacketListener {
-
-		/* (non-Javadoc)
-		 * @see org.jivesoftware.smack.PacketListener#processPacket(org.jivesoftware.smack.packet.Packet)
-		 */
-		@Override
-		public void processPacket(Packet packet) {
-			Message outgoingMsg = (Message)packet;
-			msgStorageManager.store(outgoingMsg);
-		}
-
-	}
-
-	/**
-	 * 用于捕获message error
-	 * */
-	private class MsgErrorListener implements PacketListener {
-
-		@Override
-		public void processPacket(Packet packet) {
-			Message errorMsg = (Message)packet;
-//			Util.showPacketInfo("MessageError", packet);
-//			Util.showMsgInfo("MessageError", errorMsg);
-			XMPPError error = packet.getError();
-			if(error != null){
-				Util.showErrMsg("\n信息发送失败。错误类型：" + error.getType().toString() + "\t错误代码："+ error.getCode());
-			}
-		}
-
-	}
 
 	public enum Type {
 		CHAT, MUC
@@ -149,7 +98,8 @@ public class ConversationManager {
 	//使用的java.util.concurrent中的线程安全的集合类
 	private final Map<String,CopyOnWriteArrayList<Message>> unreadMsgs= 
 		new ConcurrentHashMap<String, CopyOnWriteArrayList<Message> >();
-//	private UnreadMsgs 
+	
+	private IncomingMsgListener incomingMsgListener;
 	
 
 	public ConversationManager(Connection conn) {
@@ -173,6 +123,19 @@ public class ConversationManager {
 		connection.addPacketListener(new AllIncomingMsgListener(),
 				new AndFilter(new PacketTypeFilter(Message.class),
 							new NotFilter(new MessageTypeFilter(Message.Type.error))));
+		//监听所有的收到的Message,对其调用IncomingMessageListener
+		connection.addPacketListener(new PacketListener(){
+
+			@Override
+			public void processPacket(Packet packet) {
+				Message receivedMsg = (Message)packet;
+				Util.showDebugMsg("#incomingMsgListener#" + "recvMsg:" + receivedMsg.getBody());
+				if(incomingMsgListener != null && receivedMsg.getBody()!=null){
+					incomingMsgListener.handleIncomingMsg(receivedMsg.getType(), receivedMsg);
+				}
+			}
+			
+		}, new PacketTypeFilter(Message.class));
 		chatManager = conn.getChatManager();
 		// 添加监听端口，用于控制所有的chat会话
 		chatManager.addChatListener(new ChatListener());
@@ -559,6 +522,67 @@ public class ConversationManager {
 		}
 	}
 
+	
+
+	/**
+	 * 截获所有的非Error类型的Message用以存储
+	 *
+	 */
+	private class AllIncomingMsgListener implements PacketListener {
+
+		/* (non-Javadoc)
+		 * @see org.jivesoftware.smack.PacketListener#processPacket(org.jivesoftware.smack.packet.Packet)
+		 */
+		@Override
+		public void processPacket(Packet packet) {
+			Message msg = (Message)packet;
+			if(msg.getBody() != null)
+				msgStorageManager.store(msg);
+			
+		}
+	}
+
+	/**
+	 * 截获所有的发出去的msg信息，用以存储
+	 * @author cnliuyix
+	 *
+	 */
+	private class AllOutgoingMsgListener implements PacketListener {
+
+		/* (non-Javadoc)
+		 * @see org.jivesoftware.smack.PacketListener#processPacket(org.jivesoftware.smack.packet.Packet)
+		 */
+		@Override
+		public void processPacket(Packet packet) {
+			Message outgoingMsg = (Message)packet;
+			msgStorageManager.store(outgoingMsg);
+		}
+
+	}
+
+	/**
+	 * 用于捕获message error
+	 * */
+	private class MsgErrorListener implements PacketListener {
+
+		@Override
+		public void processPacket(Packet packet) {
+			Message errorMsg = (Message)packet;
+//			Util.showPacketInfo("MessageError", packet);
+//			Util.showMsgInfo("MessageError", errorMsg);
+			XMPPError error = packet.getError();
+			if(error != null){
+				Util.showErrMsg("\n信息发送失败。错误类型：" + error.getType().toString() + "\t错误代码："+ error.getCode());
+			}
+		}
+
+	}
+	
+	
+	protected void setIncomingMsgListener(IncomingMsgListener incomingMsgListener) {
+		this.incomingMsgListener = incomingMsgListener;
+	}
+
 	/**
 	 * @deprecated 不区分是否为delayMsg了
 	 * 判断该msg是否为delay msg
@@ -577,6 +601,7 @@ public class ConversationManager {
 	 * 更新HashMap:将未读信息添加到hashmap
 	 * */
 	private void addIncomingMsgs(Message msg) {
+		//FIXME msg.getFrom改为Util.getUsername(msg.getFrom())
 		addIncomingMsgs(msg, msg.getFrom());
 	}
 	//根据指定的id增加信息

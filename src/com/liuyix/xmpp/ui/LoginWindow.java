@@ -91,7 +91,7 @@ public class LoginWindow {
 //		System.out.println("width=" + logo.getImageData().width);
 //		System.out.println("Height:" + logo.getImageData().height);
 		//动态设置顶层shell的大小————根据图片的宽度
-//		shlJclient.setSize(logo.getImageData().width,logo.getImageData().height * 2);
+		shlJclient.setSize(logo.getImageData().width,logo.getImageData().height * 2);
 		Label picLable = new Label(shlJclient, SWT.NONE);
 		picLable.setBackground(SWTResourceManager.getColor(SWT.COLOR_CYAN));
 		picLable.setImage(logo);

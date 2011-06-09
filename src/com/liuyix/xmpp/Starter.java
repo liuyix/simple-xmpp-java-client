@@ -59,7 +59,7 @@ public class Starter {
 	// 基本功能的实例
 	RosterManager rosterManager;
 	ConversationManager conversation;
-	Scanner scanner;
+	Scanner scanner = null;
 	String mucAddr;
 	LoginWindow loginWindow;
 	/**
@@ -130,6 +130,9 @@ public class Starter {
 						case 5:
 							msg2Chatroom();
 							break;
+						case 6:
+							queryJid();
+							break;
 						case 0:
 							showUnreadMsgs();
 							break;
@@ -182,6 +185,12 @@ public class Starter {
 		}
 		System.exit(0);
 
+	}
+	
+	//查询用户jid对应的用户
+	private void queryJid() {
+		String jid = getInput("输入要查询的jid:",false);
+		System.out.println(Util.getUsername(jid));
 	}
 
 	/**
@@ -260,7 +269,8 @@ public class Starter {
 	 * @return 标准输入得到的字符串
 	 * */
 	private String getInput(boolean acceptNull) {
-		scanner = new Scanner(System.in);
+		if(scanner == null)
+			scanner = new Scanner(System.in);
 		String input = scanner.nextLine();
 		while (input == null || input.equals("") && !acceptNull) {
 			System.out.println("输入为空！重试！");
@@ -282,7 +292,7 @@ public class Starter {
 	private void showOptions(Writer writer) {
 		try {
 			writer.append("\n请选择功能:" + "\n1.显示功能列表" + "\n2.显示roster"
-					+ "\n3.发送chat" + "\n4.登录聊天室" + "\n5.发送聊天室信息" + "\n0.阅读未读信息"
+					+ "\n3.发送chat" + "\n4.登录聊天室" + "\n5.发送聊天室信息" + "\n6.qureyJid" +"\n0.阅读未读信息"
 					+ "\n999.退出程序\n");
 			writer.flush();
 		} catch (IOException e) {

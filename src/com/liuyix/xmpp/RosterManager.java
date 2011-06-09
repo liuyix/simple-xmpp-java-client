@@ -22,6 +22,7 @@ import org.jivesoftware.smack.packet.Presence;
 //TODO 重构去掉所有的System.out
 //TODO 增加功能：组管理
 public class RosterManager {
+	
 	Roster roster = null;
 	Connection conn;
 	
@@ -34,43 +35,18 @@ public class RosterManager {
 		}
 		//记住connection
 		this.conn = conn;
-		//得到roster
 		roster = conn.getRoster();
-		//TODO 实现Roster更新时的操作
-		roster.addRosterListener(new RosterListener(){
-
-			@Override
-			public void entriesAdded(Collection<String> arg0) {
-				// TODO 未实现，有新好友加入时的操作
-				
-			}
-
-			@Override
-			public void entriesDeleted(Collection<String> arg0) {
-				// TODO 未实现，有好友删除时的操作
-				
-			}
-
-			@Override
-			public void entriesUpdated(Collection<String> arg0) {
-				// TODO 未实现，有好友类型更新时的操作
-				
-			}
-
-			@Override
-			//FIXME 状态更新的操作不要使用System.out!
-			public void presenceChanged(Presence presence) {
-				//好友状态更新
-				//得到最佳的状态（单用户多个终端登录，其中一个下线的问题）
-				String user = presence.getFrom();
-				Presence bestPresence = roster.getPresence(user);
-//				System.out.println(user + " is " + presence);
-				System.out.println("now:" + user + " status:" + bestPresence);				
-			}
-			
-		});
+		initJid2UserMap(roster);
+		roster.addRosterListener(new UpdateJid2UserMapListener());
 	}//end construction
 	
+	//初始化jid2user数据结构
+	private void initJid2UserMap(Roster roster) {
+		for(RosterEntry entry : roster.getEntries()){
+			Util.updateMap(entry);
+		}
+	}
+
 	public Collection<RosterEntry> getEntries(){
 		return roster.getEntries();
 //		return null;
@@ -187,4 +163,65 @@ public class RosterManager {
 	public Roster getRoster(){
 		return roster;
 	}
+	
+	/**
+	 * @author cnliuyix
+	 * 该监听接口负责更新Util中user和jid的相互查询的数据结构
+	 *
+	 */
+	private class UpdateJid2UserMapListener implements RosterListener {
+
+		/* (non-Javadoc)
+		 * @see org.jivesoftware.smack.RosterListener#entriesAdded(java.util.Collection)
+		 */
+		@Override
+		public void entriesAdded(Collection<String> collection) {
+			updateMap(collection,"entriesAdded");
+		}
+
+		/* (non-Javadoc)
+		 * @see org.jivesoftware.smack.RosterListener#entriesDeleted(java.util.Collection)
+		 */
+		@Override
+		public void entriesDeleted(Collection<String> arg0) {
+			//FUTURE 删除操作则不更新
+
+		}
+
+		/* (non-Javadoc)
+		 * @see org.jivesoftware.smack.RosterListener#entriesUpdated(java.util.Collection)
+		 */
+		@Override
+		public void entriesUpdated(Collection<String> addrs) {
+			updateMap(addrs,"entriesUpdated");
+		}
+
+		/* (non-Javadoc)
+		 * @see org.jivesoftware.smack.RosterListener#presenceChanged(org.jivesoftware.smack.packet.Presence)
+		 */
+		@Override
+		public void presenceChanged(Presence presence) {
+		//好友状态更新
+		//得到最佳的状态（单用户多个终端登录，其中一个下线的问题）
+		String user = presence.getFrom();
+		Presence bestPresence = roster.getPresence(user);
+//		System.out.println(user + " is " + presence);
+		System.out.println("now:" + user + " status:" + bestPresence);				
+	}
+
+	}
+	private void updateMap(Collection<String> collection,String method) {
+		//
+		for(String addr : collection){
+			Util.showDebugMsg("entriesAdded: " + addr);
+			RosterEntry entry = roster.getEntry(addr);
+			if(entry == null){
+				Util.showErrMsg(method + "更新出错！");
+				return;
+			}
+			Util.updateMap(entry);
+		}
+	}
+
+
 }

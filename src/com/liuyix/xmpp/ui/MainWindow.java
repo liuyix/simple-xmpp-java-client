@@ -6,7 +6,7 @@ package com.liuyix.xmpp.ui;
  * **/
 
 
-import java.awt.event.MouseAdapter;
+
 import java.util.Collection;
 
 import org.eclipse.swt.SWT;
@@ -86,7 +86,7 @@ public class MainWindow {
 	/**
 	 * Open the window.
 	 */
-	public void open() {
+	public Shell open() {
 		Display display = Display.getDefault();
 		
 		shell = new Shell(display,SWT.SYSTEM_MODAL | SWT.SHELL_TRIM);
@@ -105,11 +105,14 @@ public class MainWindow {
 		createContents();
 		shell.open();
 		shell.layout();
-		while (!shell.isDisposed()) {
-			if (!display.readAndDispatch()) {
-				display.sleep();
-			}
-		}
+		return shell;
+//		while (!shell.isDisposed()) {
+//			if (!display.readAndDispatch()) {
+//				Util.showDebugMsg("~~~~");
+//				
+//				display.sleep();
+//			}
+//		}
 	}
 
 	private void createMenubar() {
@@ -171,7 +174,7 @@ public class MainWindow {
 //		GridData gridData = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_FILL);
 		GridData gridData = new GridData(SWT.FILL,SWT.FILL,false,true,1,3);
 //		gridData.heightHint = 40;
-		gridData.widthHint = image.getBounds().width + 10;
+//		gridData.widthHint = image.getBounds().width + 10;
 		userImageLbl.setLayoutData(gridData);
 		userImageLbl.setImage(image);
 		userImageLbl.addMouseListener(new MouseListener() {			
@@ -246,7 +249,7 @@ public class MainWindow {
 	 * TODO 获取用户图像，若没有则返回默认图像
 	 * */
 	private Image getUserImage() {
-		Image userImage = new Image(Display.getCurrent(), "im-1.png");
+		Image userImage = new Image(Display.getCurrent(), "default-user-image.png");
 		Image scaledImage = new Image(Display.getCurrent(),userImage.getImageData().scaledTo(80, 80));
 		userImage.dispose();
 		return scaledImage;

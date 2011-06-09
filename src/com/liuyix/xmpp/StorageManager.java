@@ -39,7 +39,7 @@ public class StorageManager {
 //		//userDir = mkdir(BASEDIR,username);
 		//应该保证全局的唯一性
 		if(storage == null)
-			storage = new FsStorage(Util.getUsername());
+			storage = new FsStorage(Util.getYourname());
 	}
 	
 
@@ -75,14 +75,14 @@ public class StorageManager {
 	public void store(Message msg){
 		//TODO 方法类同于tolog方法，返回的是错误号
 		//需要检查msg.body()是否为空
-		int errcode = storage.store(msg);
-		if(errcode == 0){
-			Util.showDebugMsg("Msg存储成功");
-		}
-		else{
-			Util.showErrMsg("Msg存储失败，错误代码：" + errcode);
-			Util.showErrMsg("错误信息：" + storage.getErrMsg(errcode));
-		}
+//		int errcode = storage.store(msg);
+//		if(errcode == 0){
+////			Util.showDebugMsg("Msg存储成功");
+//		}
+//		else{
+//			Util.showErrMsg("Msg存储失败，错误代码：" + errcode);
+//			Util.showErrMsg("错误信息：" + storage.getErrMsg(errcode));
+//		}
 //		if(writer == null){
 //			Util.showErrMsg("StorageManager", "store", "writer为null");
 //			return;
