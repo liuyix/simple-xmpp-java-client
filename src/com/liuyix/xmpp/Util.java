@@ -3,6 +3,7 @@ package com.liuyix.xmpp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.jivesoftware.smack.RosterEntry;
 import org.jivesoftware.smack.packet.Message;
@@ -19,7 +20,8 @@ public class Util {
 //	static BufferedWriter writer = new BufferedWriter(new FileWriter(new File("JClient.log")));
 	private static String yourname;
 	//user与jid的查询，key是jid,value是user
-	private static HashMap<String,String> jid2user = new HashMap<String,String>();
+	private static Map<String,String> jid2user = new java.util.concurrent.ConcurrentHashMap<String,String>();
+//	private static Map<String,String> user2jid = new java.util.concurrent.ConcurrentHashMap<String, String>();
 	public static String getYourname(){
 		return yourname;
 	}
@@ -161,9 +163,28 @@ public class Util {
 		Util.showErrMsg("Util.getUsername:参数为null!");
 		return null;
 	}
+	
+//	/**
+//	 * 
+//	 * 
+//	 * @return 不存在username则返回null
+//	 * */
+//	public static String getJidByUsername(String username){
+//		String jid;
+//		if(username != null){
+//			jid = user2jid.get(username);
+//			return jid;
+//		}
+//		else
+//			return null;
+//		
+//	}
+	
 	protected static void updateMap(String jid, String username) {
 		if(jid!=null&&username!=null){
 			jid2user.put(jid, username);
+//			user2jid.put(username, jid);
+			Util.showDebugMsg("\nupdateMap\njid: " + jid + "\nuser: " + username);
 		}
 		else{
 			Util.showErrMsg("updateMap参数错误！");

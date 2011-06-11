@@ -20,5 +20,6 @@
 	<classpathentry kind="lib" path="/usr/lib/eclipse/plugins/org.eclipse.core.databinding_1.2.0.M20090819-0800.jar" sourcepath="/usr/lib/eclipse/plugins/org.eclipse.core.databinding.source_1.2.0.M20090819-0800.jar"/>
 	<classpathentry kind="lib" path="/usr/lib/eclipse/plugins/com.ibm.icu_4.0.1.v20100125.jar" sourcepath="/usr/lib/eclipse/plugins/com.ibm.icu_4.0.1.v20100125.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/home/cnliuyix/lib/commons-logging-1.1.1/commons-logging-1.1.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

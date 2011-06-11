@@ -9,13 +9,18 @@ package com.liuyix.xmpp.ui;
 
 import java.util.Collection;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.events.VerifyEvent;
@@ -42,30 +47,37 @@ import org.jivesoftware.smack.Roster;
 import org.jivesoftware.smack.RosterEntry;
 import org.jivesoftware.smack.RosterGroup;
 
+import com.liuyix.xmpp.ChatRequestListener;
 import com.liuyix.xmpp.PresenceManager;
 import com.liuyix.xmpp.Util;
 
 
 public class MainWindow {
-
+	private static Log log = LogFactory.getLog(MainWindow.class);
 	protected Shell shell;
 
 	private String jid;
 	private String username;
 	private Roster roster;
+	private ChatRequestListener chatReqListener;
+	private ResourceManager resourceManager;
 	
-	public MainWindow(String jid, String username, Roster roster) {
+	public MainWindow(String jid, String username, Roster roster,ChatRequestListener chatReqListener) {
 		super();
 		this.jid = jid;
 		this.username = username;
 		this.roster = roster;
+		this.chatReqListener = chatReqListener;
+		resourceManager = ResourceManager.getInstance();
+		
 	}
 	
 	/** 
 	 * @deprecated 只可用于测试！
 	 * */
 	public MainWindow() {
-		super();
+		this("TEST","TEST",null,null);
+
 	}	
 
 	/**
@@ -75,7 +87,14 @@ public class MainWindow {
 	public static void main(String[] args) {
 		try {
 			MainWindow window = new MainWindow();
-			window.open();
+			Shell shell = window.open();
+			
+			while(shell.isDisposed()!=true){
+				if(Display.getDefault().readAndDispatch()!=true){
+					Display.getDefault().sleep();
+				}
+			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -93,8 +112,15 @@ public class MainWindow {
 		
 		shell.setSize(300, 600);
 		shell.setText("JClient");
-		shell.setImage(new Image(Display.getDefault(), "icon00.png"));
+		shell.setImage(resourceManager.getImage(ResourceManager.logo));
 		shell.setLayout(new FillLayout(SWT.VERTICAL));
+		shell.addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				
+			}
+		});
 		
 //		//FUTURE 设置位置
 //		Rectangle rec = display.getPrimaryMonitor().getBounds();
@@ -103,6 +129,14 @@ public class MainWindow {
 		createMenubar();
 		
 		createContents();
+		int windowX =  Display.getDefault().getBounds().width - shell.getBounds().width;
+		int windowY = (Display.getDefault().getBounds().height - shell.getBounds().height)/2;
+//		log.debug("shell width=" + shell.getBounds().width + ",height=" + shell.getBounds().height);
+//		log.debug("display x:" + Display.getDefault().getBounds().width + ",y:" + Display.getDefault().getBounds().height);
+		shell.setBounds(
+				windowX, 
+				windowY,
+				shell.getBounds().width,shell.getBounds().height);
 		shell.open();
 		shell.layout();
 		return shell;
@@ -249,16 +283,32 @@ public class MainWindow {
 	 * TODO 获取用户图像，若没有则返回默认图像
 	 * */
 	private Image getUserImage() {
-		Image userImage = new Image(Display.getCurrent(), "default-user-image.png");
+		Image userImage = resourceManager.getImage(ResourceManager.default_user_image);
 		Image scaledImage = new Image(Display.getCurrent(),userImage.getImageData().scaledTo(80, 80));
-		userImage.dispose();
 		return scaledImage;
 	}
 	
 	// TODO 联系人列表
 	private void createRosterPanel(SashForm form) {
 		Tree tree = new Tree(form,SWT.BORDER | SWT.VIRTUAL);
-		
+		tree.addSelectionListener(new SelectionAdapter() {
+
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				//TODO 
+				TreeItem selectedItem = (TreeItem)e.item;
+				String userInfo = selectedItem.getText();
+				//FIXME 应该使用Map结构记录所有的显示的user-jid数据结构
+				if(userInfo.indexOf("(")!=-1 && userInfo.indexOf(')')!=-1){
+					String username = userInfo.substring(0, userInfo.indexOf("("));
+					String userJid = userInfo.substring(userInfo.indexOf("(")+1,userInfo.indexOf(")"));
+					Util.showDebugMsg("\nSelect:username" + username + "  userJid:" + userJid);
+					if(chatReqListener != null)
+						chatReqListener.handleChatRequest(username,userJid);
+				}
+			}
+			
+		});
 		int rootItemCnt = 10,subRootItemCnt = 30;
 //		TreeItem item,subItem;
 //		for(int i=0;i<rootItemCnt;++i){
@@ -290,10 +340,14 @@ public class MainWindow {
 			treeItem.setText(group.getName());
 			for(RosterEntry entry : group.getEntries()){
 				subTreeItem = new TreeItem(treeItem, SWT.NULL);
-				subTreeItem.setText(entry.getName());
+				subTreeItem.setText(entry.getName() + "(" + entry.getUser() + ")");
 			}
-		}
-		
+			treeItem.setExpanded(true);
+		}		
+	}
+
+	void setChatReqListener(ChatRequestListener chatReqListener) {
+		this.chatReqListener = chatReqListener;
 	}
 	
 	

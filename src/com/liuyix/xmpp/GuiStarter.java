@@ -3,12 +3,15 @@
  */
 package com.liuyix.xmpp;
 
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.jivesoftware.smack.Connection;
@@ -18,6 +21,8 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.Message.Type;
+import org.jivesoftware.smackx.bytestreams.socks5.Socks5BytestreamManager;
+import org.jivesoftware.smackx.bytestreams.socks5.Socks5Proxy;
 import org.jivesoftware.smackx.pubsub.PresenceState;
 
 import com.liuyix.xmpp.ui.ChatWindow;
@@ -29,8 +34,8 @@ import com.liuyix.xmpp.ui.MainWindow;
  * @author cnliuyix
  * 
  */
-public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener {
-
+public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatRequestListener {
+	static Log logger = LogFactory.getLog(GuiStarter.class);
 	private boolean enableDebug = true;
 	// 非常重要的成员
 	Connection connection;
@@ -52,12 +57,14 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener {
 	
 	//TODO dirty hack
 	public static void deleteChatWindow(String username){
+		logger.debug("");
 		if(chatWindowMap.containsKey(username)){
 			chatWindowMap.remove(username);
 		}
 	}
 
 	public GuiStarter(boolean debug) {
+		logger.debug("");
 		enableDebug = debug;
 		chatWindowMap = new java.util.concurrent.ConcurrentHashMap<String, ChatWindow>();
 		incomingMsgCollection = new java.util.concurrent.CopyOnWriteArrayList<Message>();
@@ -70,7 +77,9 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener {
 			LoginWindow loginWindow = new LoginWindow(true, "mick", "mick",
 					"localhost");
 			loginWindow.addLoginListener(new LoginHandler(loginWindow));
+			logger.info("call loginWindow");
 			loginWindow.open();
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -82,7 +91,7 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener {
 		conversation.setIncomingMsgListener(this);
 		presenceManager = new PresenceManager(connection);
 		MainWindow mainWindow = new MainWindow(connection.getUser(), username,
-				rosterManager.getRoster());
+				rosterManager.getRoster(),this);
 		Shell shell = mainWindow.open();
 		Display display = Display.getDefault();
 		//多线程问题产生点
@@ -98,8 +107,19 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener {
 			}
 			
 		}
+		
+//		Socks5Proxy.getSocks5Proxy().stop();		
+//		Socks5BytestreamManager.getBytestreamManager(connection).disableService();
 
+		connection.disconnect();
+		System.exit(0);
+//		closeApp();
+		return;
 	}
+
+//	private void closeApp() {
+//		this.connection.disconnect();
+//	}
 
 	/**
 	 * 登录服务器,不操作用户登录
@@ -259,6 +279,7 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener {
 		 chatWindow.handleIncomingMsg(msg.getBody());
 
 	}
+	
 
 	/**
 	 * 建立chatWindow的方法
@@ -329,5 +350,20 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener {
 	//由ChatWindow界面调用
 	public void handleOutgoingMsg(String jid, String msg) {
 		conversation.sendMsg(jid, msg);		
+	}
+
+	@Override
+	//负责处理MainWindow得到的chat请求
+	public void handleChatRequest(String username, String jid) {
+		ChatWindow chatWindow = getChatWindow(username,jid);
+		chatWindow.getShell().setFocus();
+	}
+	public ChatWindow getChatWindow(String username, String jid) {
+		ChatWindow chatWindow = chatWindowMap.get(username);
+		if (chatWindow == null)
+			createChatWindow(username, jid);
+		// 已经建立了一个聊天窗口，则调用该ChatWindow的处理接收消息的方法
+		chatWindow = chatWindowMap.get(username);
+		return chatWindow;
 	}
 }

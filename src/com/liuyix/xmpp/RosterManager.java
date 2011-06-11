@@ -44,6 +44,13 @@ public class RosterManager {
 	private void initJid2UserMap(Roster roster) {
 		for(RosterEntry entry : roster.getEntries()){
 			Util.updateMap(entry);
+			Util.showDebugMsg("\ninitJid2UserMap:");
+			Util.showDebugMsg("\nuser:" + entry.getUser());
+			Util.showDebugMsg("\ngroup:");
+			for(RosterGroup group : entry.getGroups()){
+				Util.showDebugMsg(group.getName());
+			}
+			
 		}
 	}
 

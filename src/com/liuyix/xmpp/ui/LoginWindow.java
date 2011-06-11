@@ -27,6 +27,7 @@ public class LoginWindow {
 	private Text servTxt;
 	private LoginListener loginListener;
 	private boolean enableDebug;
+	private static ResourceManager resourceManager = null;
 
 	public LoginWindow(boolean debug,String user,String passwd,String host) {
 		super();
@@ -35,6 +36,10 @@ public class LoginWindow {
 		this.user = user;
 		this.passwd = passwd;
 		this.server = host;
+		if(resourceManager == null){
+			resourceManager = ResourceManager.getInstance();
+		}
+		
 	}	
 	
 	public LoginWindow() {
@@ -84,10 +89,10 @@ public class LoginWindow {
 		shlJclient.setBackground(SWTResourceManager.getColor(SWT.COLOR_WIDGET_HIGHLIGHT_SHADOW));
 		shlJclient.setSize(205, 432);
 		shlJclient.setText("JClient");
-		shlJclient.setImage(new Image(Display.getDefault(), "icon00.png"));
+		shlJclient.setImage(resourceManager.getImage(ResourceManager.logo));
 		shlJclient.setLayout(new FillLayout(SWT.VERTICAL));
 		
-		Image logo = new Image(Display.getCurrent(), "im-1.png");
+		Image logo = resourceManager.getImage(ResourceManager.login_image);
 //		System.out.println("width=" + logo.getImageData().width);
 //		System.out.println("Height:" + logo.getImageData().height);
 		//动态设置顶层shell的大小————根据图片的宽度

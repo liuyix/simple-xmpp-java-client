@@ -1,6 +1,10 @@
 package com.liuyix.xmpp.ui;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ExtendedModifyEvent;
+import org.eclipse.swt.custom.ExtendedModifyListener;
+import org.eclipse.swt.custom.LineStyleEvent;
+import org.eclipse.swt.custom.LineStyleListener;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
@@ -13,6 +17,7 @@ import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.TextStyle;
 import org.eclipse.swt.widgets.Text;
@@ -41,7 +46,6 @@ import org.eclipse.core.databinding.observable.Realm;
 
 public class ChatWindow {
 	
-	private DataBindingContext m_bindingContext;
 
 	protected Shell shell;
 	private String username;//联系人的名字
@@ -54,7 +58,13 @@ public class ChatWindow {
 	private Text sendMsgTxt;
 	private GridData gd_sendMsgTxt;
 	private OutgoingMsgListener sendMsgListener;
+	private static TextStyle ISAYSTYLE = null;
+	private static TextStyle USERSAYSTYLE = null;
 //	private static TextStyle YOURNAMESTYLE =  
+	//一个标志：正在输出的是标题还是msg内容
+	private boolean printingMsg = false;
+	private static final String ISAYSTRING = "我说";
+	private static ResourceManager resourceManager;
 	
 	public ChatWindow(String username, String jid, Image userImage,
 			Type statusType, Mode statusMode,String statusInfo,OutgoingMsgListener listener) {
@@ -66,8 +76,27 @@ public class ChatWindow {
 		this.statusInfo = statusInfo;
 		this.statusMode = statusMode;
 		this.sendMsgListener = listener;
+		if(ISAYSTYLE == null || USERSAYSTYLE == null){
+			initSayStyle();
+		}
+		if(resourceManager == null){
+			resourceManager = ResourceManager.getInstance();
+		}
 	}
-	
+	/**
+	 * 初始化样式
+	 * */
+	private void initSayStyle() {
+		ISAYSTYLE = new TextStyle();
+		USERSAYSTYLE = new TextStyle();
+		Color darkgreen = Display.getDefault().getSystemColor(SWT.COLOR_DARK_GREEN);
+		Color darkblue = Display.getDefault().getSystemColor(SWT.COLOR_DARK_BLUE);
+		Color white = Display.getDefault().getSystemColor(SWT.COLOR_WHITE);
+		ISAYSTYLE.background = USERSAYSTYLE.background = white;
+		ISAYSTYLE.foreground = darkblue;
+		USERSAYSTYLE.foreground = darkgreen;
+	}
+
 	//debug only
 	public ChatWindow() {
 		this("TEST-USER","TEST@localhost",null,Presence.Type.available,Mode.available,"TEST:AVAILABLE",new OutgoingMsgListener() {
@@ -200,6 +229,31 @@ public class ChatWindow {
 	private void createMsgBoard(SashForm form) {
 		msgBoardTxt = new StyledText(form, SWT.MULTI | SWT.WRAP | SWT.BORDER | SWT.V_SCROLL | SWT.READ_ONLY);
 //		text.setEditable(false);
+		msgBoardTxt.addLineStyleListener(new LineStyleListener() {
+			@Override
+			public void lineGetStyle(LineStyleEvent event) {
+				
+				
+//				Util.showDebugMsg("entering LineStyleListener");
+//				Util.showDebugMsg("event:" + event.lineText);
+//				Util.showDebugMsg("printingMsg:" + printingMsg);
+				if(printingMsg == false){
+					String text = event.lineText;
+					if(text.contains(ISAYSTRING)){
+						event.styles = new StyleRange[]{
+								new StyleRange(event.lineOffset,
+										event.lineText.length(),
+										ISAYSTYLE.foreground,ISAYSTYLE.background)};
+					}
+					else{
+						event.styles = new StyleRange[]{new StyleRange(event.lineOffset,
+								event.lineText.length(),
+								USERSAYSTYLE.foreground,
+								USERSAYSTYLE.background)};
+					}
+				}
+			}
+		});
 		
 	}
 
@@ -272,7 +326,7 @@ public class ChatWindow {
 	
 	private Image getUserImage(){
 		if(userImage == null){
-			Image userImage = new Image(Display.getCurrent(), "default-user-image.png");
+			Image userImage = resourceManager.getImage(ResourceManager.default_user_image);
 			Image scaledImage = new Image(Display.getCurrent(),userImage.getImageData().scaledTo(80, 80));
 			userImage.dispose();
 			return scaledImage;
@@ -316,16 +370,30 @@ public class ChatWindow {
 //					Display.getDefault().getSystemColor(SWT.COLOR_DARK_BLUE),
 //					Display.getDefault().getSystemColor(SWT.COLOR_WHITE));
 //			StyleRange range = new StyleRange(yournameStyle);
-			msgBoardTxt.append("我说：\n");
+//			String youSayStr = "我说:";
+			printingMsg = false;
+			msgBoardTxt.append(ISAYSTRING + "\n");
+			printingMsg = true;
 			msgBoardTxt.append(msg);
+			
 			msgBoardTxt.append("\n");
 		}
 		else{
+			printingMsg = false;
 			msgBoardTxt.append(username + "说:\n");
+			printingMsg = true;
 			msgBoardTxt.append(msg);
 			msgBoardTxt.append("\n");
 		}
 		
+	}
+
+	/**
+	 * 本方法仅用于GuiStarter，用于获取焦点
+	 * @return ChatWindow的shell
+	 */
+	public Shell getShell() {
+		return shell;
 	}
 
 	/**
