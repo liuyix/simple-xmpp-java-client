@@ -28,6 +28,7 @@ public class LoginWindow {
 	private LoginListener loginListener;
 	private boolean enableDebug;
 	private static ResourceManager resourceManager = null;
+	private Button debugBtn;
 
 	public LoginWindow(boolean debug,String user,String passwd,String host) {
 		super();
@@ -133,13 +134,44 @@ public class LoginWindow {
 		new Label(loginInfo, SWT.NONE);
 		
 		servTxt = new Text(loginInfo, SWT.BORDER);
-		servTxt.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		servTxt.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 3, 1));
 		
-		new Label(loginInfo, SWT.NONE);
+		debugBtn = new Button(loginInfo,SWT.CHECK);
+		debugBtn.setText("debug");
+		debugBtn.setSelection(enableDebug);
+		debugBtn.setLayoutData(new GridData(SWT.FILL,SWT.CENTER,false,true,1,1));
+		debugBtn.addSelectionListener(new SelectionAdapter() {
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.swt.events.SelectionAdapter#widgetSelected(org.eclipse.swt.events.SelectionEvent)
+			 */
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+								
+			}
+			
+		});
 		
 		Button loginButton = new Button(loginInfo, SWT.NONE);
+		loginButton.setLayoutData(new GridData(SWT.FILL,SWT.CENTER,false,true,1,1));
 		loginButton.setText("登录");
 		loginButton.addSelectionListener(new LoginBtnAdapter());
+		
+//		Button registerBtn = new Button(loginInfo,SWT.PUSH);
+//		registerBtn.setText("注册新帐号");
+//		registerBtn.addSelectionListener(new SelectionAdapter() {
+//
+//			/* (non-Javadoc)
+//			 * @see org.eclipse.swt.events.SelectionAdapter#widgetSelected(org.eclipse.swt.events.SelectionEvent)
+//			 */
+//			@Override
+//			public void widgetSelected(SelectionEvent e) {
+//				// TODO 注册功能
+//				
+//			}
+//			
+//		});
+		
 		
 //		new Label(loginInfo, SWT.NONE);
 //		new Label(loginInfo, SWT.NONE);
@@ -163,8 +195,9 @@ public class LoginWindow {
 			String username = userTxt.getText();
 			String passwd = pwdTxt.getText();
 			String serverName = servTxt.getText();
+			boolean debug = debugBtn.getSelection();
 //			System.out.println("\nusername:" + username + "\npasswd:" + passwd + "\nserverName:" + serverName);
-			loginListener.handleLoginInfo(username, passwd, serverName);		
+			loginListener.handleLoginInfo(username, passwd, serverName,debug);		
 		}
 		
 	}

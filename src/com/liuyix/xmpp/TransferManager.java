@@ -16,17 +16,20 @@ import org.jivesoftware.smackx.filetransfer.OutgoingFileTransfer;
  * 
  * 
  * */
-public class FileTrans {
+public class TransferManager {
+
+
 	//快速传送文件
 	Connection connection;
 	FileTransferManager fileTransferManager;	
 	InBandBytestreamManager ibbManager;
+	IncomingFileReqListener listener;
 	/**
 	 * @exception IllegalArgumentException
 	 * 				connection为空或者用户没有登录
 	 * 
 	 * */	
-	public FileTrans(Connection conn){
+	public TransferManager(Connection conn,IncomingFileReqListener listener){
 		if(conn == null){
 			throw new IllegalArgumentException("connection is NULL");
 		}
@@ -35,29 +38,52 @@ public class FileTrans {
 		}
 		this.connection = conn;
 		fileTransferManager = new FileTransferManager(connection);
+		this.listener = listener;
 		ibbManager = InBandBytestreamManager.getByteStreamManager(conn);
-		fileTransferManager.addFileTransferListener(new FileTransferListener() {
-			
-			@Override
-			public void fileTransferRequest(FileTransferRequest request) {
-				// 
-				IncomingFileTransfer ifTransfer = request.accept();
-				try {
-					ifTransfer.recieveFile(new File("tmp"));
-				} catch (XMPPException e) {
-					// 
-//					e.printStackTrace();
-					Util.showErrMsg("FILE RECV:\t" + e.getMessage());
-					e.printStackTrace();
-				}
-			}
-		});
+		fileTransferManager.addFileTransferListener(new FileTranserHandler());
+		
 		
 	}
 
 	void send(String recver,File file) throws XMPPException{
 		OutgoingFileTransfer outTransfer = fileTransferManager.createOutgoingFileTransfer(recver);
-		outTransfer.sendFile(file, "des");		
+		outTransfer.sendFile(file, "");
+	}
+	
+	void send(String recver,String filepath) throws XMPPException{
+		File toSendFile = new File(filepath);
+		send(recver,toSendFile);
+	}
+
+	/**
+	 * @param listener the listener to set
+	 */
+	void setListener(IncomingFileReqListener listener) {
+		this.listener = listener;
+	}
+	
+	private class FileTranserHandler implements FileTransferListener {
+
+		@Override
+		public void fileTransferRequest(FileTransferRequest request) {
+			if(listener == null){
+				request.reject();
+				return;
+			}
+			File filePath = listener.handleFileTranserRequest(request.getRequestor(),request.getFileName(),request.getFileSize());
+			if(filePath != null){
+				IncomingFileTransfer ifTransfer = request.accept();
+				try {
+					ifTransfer.recieveFile(filePath);
+				} catch (XMPPException e) {
+					// 
+	//					e.printStackTrace();
+					Util.showErrMsg("FILE RECV:\t" + e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
+
 	}
 	
 }

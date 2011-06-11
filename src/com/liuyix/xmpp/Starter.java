@@ -3,6 +3,7 @@ package com.liuyix.xmpp;
 //import java.util.List;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -99,9 +100,7 @@ public class Starter {
 			boolean hasLogined = login(debug_enable, host);
 			if (hasLogined) {
 				// ==========已经成功登录===============//
-				// 该文件传输可行，但是要注意必须是完整的JID才可以！
-				// new FileTrans(connection).send("jack@localhost/hello",new
-				// File("/home/cnliuyix/music/xmpp.mp3"));
+
 				Util.setUsername(connection.getUser());
 				rosterManager = new RosterManager(connection);
 				conversation = new ConversationManager(connection);
@@ -132,6 +131,9 @@ public class Starter {
 							break;
 						case 6:
 							queryJid();
+							break;
+						case 7:
+							fileTransfer();
 							break;
 						case 0:
 							showUnreadMsgs();
@@ -187,6 +189,18 @@ public class Starter {
 
 	}
 	
+	private void fileTransfer() {
+		
+		String jid = getInput("输入用户完整jid", false);
+		// 该文件传输可行，但是要注意必须是完整的JID才可以！
+		try{
+		 new TransferManager(connection,null).send(jid,new File("/home/cnliuyix/music/xmpp.mp3"));
+		}catch(XMPPException e){
+			e.printStackTrace();
+		}
+		
+	}
+
 	//查询用户jid对应的用户
 	private void queryJid() {
 		String jid = getInput("输入要查询的jid:",false);

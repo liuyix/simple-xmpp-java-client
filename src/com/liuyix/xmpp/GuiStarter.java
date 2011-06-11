@@ -4,6 +4,7 @@
 package com.liuyix.xmpp;
 
 
+import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +13,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.jivesoftware.smack.Connection;
 import org.jivesoftware.smack.ConnectionConfiguration;
@@ -34,7 +38,7 @@ import com.liuyix.xmpp.ui.MainWindow;
  * @author cnliuyix
  * 
  */
-public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatRequestListener {
+public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatRequestListener,IncomingFileReqListener {
 	static Log logger = LogFactory.getLog(GuiStarter.class);
 	private boolean enableDebug = true;
 	// 非常重要的成员
@@ -45,11 +49,20 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 	RosterManager rosterManager;
 	ConversationManager conversation;
 	PresenceManager presenceManager;
+	TransferManager transferManager;
 	String mucAddr;
 	LoginWindow loginWindow;
 	static Map<String, ChatWindow> chatWindowMap;// key:username,value:对应的chatWindow
 	Collection<Message> incomingMsgCollection;
 	boolean isQuit = false;
+	private Shell shell;
+	private boolean hasFileTransferRequest;
+	
+	//FIXME 简单实现一个传输文件对话框
+	private String fileTransferUsername;
+	private String fileTransferFilename;
+	private long filesize;
+	private File toSaveLocation;
 
 	public static void main(String[] args) {
 		new GuiStarter(true).run();
@@ -68,6 +81,7 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 		enableDebug = debug;
 		chatWindowMap = new java.util.concurrent.ConcurrentHashMap<String, ChatWindow>();
 		incomingMsgCollection = new java.util.concurrent.CopyOnWriteArrayList<Message>();
+		hasFileTransferRequest = false;
 	}
 
 	private void run() {
@@ -90,13 +104,15 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 		conversation = new ConversationManager(connection);
 		conversation.setIncomingMsgListener(this);
 		presenceManager = new PresenceManager(connection);
+		transferManager = new TransferManager(connection, this);
 		MainWindow mainWindow = new MainWindow(connection.getUser(), username,
 				rosterManager.getRoster(),this);
-		Shell shell = mainWindow.open();
+		
+		shell = mainWindow.open();
 		Display display = Display.getDefault();
 		//多线程问题产生点
 		while (!shell.isDisposed()) {
-			if (!display.readAndDispatch()&&incomingMsgCollection.isEmpty()) {
+			if (!display.readAndDispatch()&&incomingMsgCollection.isEmpty()&&hasFileTransferRequest==false) {
 				display.sleep();
 			}			
 			else if(incomingMsgCollection.isEmpty()!=true){
@@ -104,6 +120,10 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 					handleChat(msg);
 				}
 				incomingMsgCollection.clear();
+			}
+			else if(hasFileTransferRequest){
+				createTransferQueryDialog(fileTransferUsername, fileTransferFilename,filesize);
+				hasFileTransferRequest = false;
 			}
 			
 		}
@@ -175,9 +195,10 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 		}
 
 		@Override
-		public void handleLoginInfo(String name, String passwd, String server) {
+		public void handleLoginInfo(String name, String passwd, String server,boolean debug) {
 			// Util.showDebugMsg("\nname:" + name + "\npasswd:" + passwd +
 			// "\nserver:" + server);
+			enableDebug = debug;
 			try {
 				if (enterServ(enableDebug, server) != true) {
 					// TODO 登录服务器未成功
@@ -365,5 +386,66 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 		// 已经建立了一个聊天窗口，则调用该ChatWindow的处理接收消息的方法
 		chatWindow = chatWindowMap.get(username);
 		return chatWindow;
+	}
+
+	@Override
+	public File handleFileTranserRequest(String username,String filename, long filesize) {
+		logger.debug("username:" + username + "\nfilename:" + filename + "\nsize:" + filesize);
+//		boolean accept = createTransferQueryDialog(username,filename,filesize);
+		sendTransferRequest(username,filename,filesize);
+		synchronized (this) {
+			try {
+				this.wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}		
+		logger.debug("toSaveLocation" + toSaveLocation==null?"null":toSaveLocation.getAbsolutePath());
+		return toSaveLocation;
+	}
+
+	private void sendTransferRequest(String username, String filename,
+			long filesize) {
+		this.filesize = filesize;
+		this.fileTransferFilename = filename;
+		this.fileTransferUsername = username;
+		hasFileTransferRequest = true;
+		Display.getDefault().wake();
+	}
+
+	private boolean createTransferQueryDialog(String username, String filename,
+			long filesize) {
+		String msg = username + " send " + filename + "size:" + filesize + "\n"; 
+		boolean accept = MessageDialog.openQuestion(shell,"是否接收文件",msg);
+		if(accept){
+//			toSaveLocation = new File("/home/cnliuyix/tmp");
+			toSaveLocation = getFileSaveLocation(filename);
+		}
+		synchronized (this) {
+			this.notify();
+		}
+		
+		return accept;
+	}
+
+	private File getFileSaveLocation(String filename) {
+		//通过filename创建一个选择保存位置的对话框
+//		String
+		String toSaveFilename =  createFileDialog(filename);
+		logger.debug("filename:" + toSaveFilename);
+		return new File(toSaveFilename);
+	}
+
+	private String createFileDialog(String filename) {
+		// 创建一个文件对话框
+		FileDialog dialog = new FileDialog(shell, SWT.SAVE);
+		dialog.setFilterPath(null);
+		if(filename != null && !filename.equals("")){
+			dialog.setFileName(filename);		
+		}
+		else{
+//			dialog.setFilterExtensions(new String[]{"*.*"})	;		
+		}
+		return dialog.open();
 	}
 }
