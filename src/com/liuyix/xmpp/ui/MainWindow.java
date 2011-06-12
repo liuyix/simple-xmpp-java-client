@@ -7,6 +7,7 @@ package com.liuyix.xmpp.ui;
 
 
 
+import java.awt.event.MouseAdapter;
 import java.util.Collection;
 
 import org.apache.commons.logging.Log;
@@ -109,7 +110,7 @@ public class MainWindow {
 	public Shell open() {
 		Display display = Display.getDefault();
 		
-		shell = new Shell(display,SWT.SYSTEM_MODAL | SWT.SHELL_TRIM);
+		shell = new Shell(display,SWT.SHELL_TRIM);
 		
 		shell.setSize(300, 600);
 		shell.setText("JClient");
@@ -203,7 +204,7 @@ public class MainWindow {
 			 */
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				new SendMsgWindow(chatReqListener).open();		
+				new SendMsgWindow(shell,chatReqListener).open();		
 			}
 			
 		});
@@ -395,6 +396,24 @@ public class MainWindow {
 				}
 			}
 			
+		});
+		tree.addMouseListener(new MouseListener() {
+			
+			@Override
+			public void mouseUp(MouseEvent e) {
+				
+			}
+			
+			@Override
+			public void mouseDown(MouseEvent e) {
+				// 
+				
+			}
+			
+			@Override
+			public void mouseDoubleClick(MouseEvent e) {
+				log.debug("e.data=" + e.data);
+			}
 		});
 		int rootItemCnt = 10,subRootItemCnt = 30;
 //		TreeItem item,subItem;

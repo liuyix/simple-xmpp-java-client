@@ -65,8 +65,9 @@ public class ChatWindow {
 	private boolean printingMsg = false;
 	private static final String ISAYSTRING = "我说";
 	private static ResourceManager resourceManager;
+	private Shell topShell;
 	
-	public ChatWindow(String username, String jid, Image userImage,
+	public ChatWindow(Shell topShell,String username, String jid, Image userImage,
 			Type statusType, Mode statusMode,String statusInfo,OutgoingMsgListener listener) {
 		super();
 		this.username = username;
@@ -76,6 +77,7 @@ public class ChatWindow {
 		this.statusInfo = statusInfo;
 		this.statusMode = statusMode;
 		this.sendMsgListener = listener;
+		this.topShell = topShell;
 		if(ISAYSTYLE == null || USERSAYSTYLE == null){
 			initSayStyle();
 		}
@@ -99,7 +101,7 @@ public class ChatWindow {
 
 	//debug only
 	public ChatWindow() {
-		this("TEST-USER","TEST@localhost",null,Presence.Type.available,Mode.available,"TEST:AVAILABLE",new OutgoingMsgListener() {
+		this(null,"TEST-USER","TEST@localhost",null,Presence.Type.available,Mode.available,"TEST:AVAILABLE",new OutgoingMsgListener() {
 			
 			@Override
 			public void handleOutgoingMsg(String jid, String msg) {
@@ -124,7 +126,13 @@ public class ChatWindow {
 	 */
 	public void open() {
 		Display display = Display.getDefault();
+		
+		if(topShell == null)
 		shell = new Shell(display,SWT.SYSTEM_MODAL | SWT.SHELL_TRIM | SWT.RESIZE);
+		else{
+//			shell = new Shell(topShell,SWT.SYSTEM_MODAL | SWT.SHELL_TRIM | SWT.RESIZE);
+			shell = new Shell(topShell,SWT.DIALOG_TRIM);
+		}
 		//监听关闭操作
 		shell.addDisposeListener(new DisposeListener() {
 			

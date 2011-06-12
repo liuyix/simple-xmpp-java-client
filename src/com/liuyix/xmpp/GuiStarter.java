@@ -32,7 +32,7 @@ import com.liuyix.xmpp.ui.MainWindow;
  * 
  */
 public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatRequestListener,IncomingFileReqListener{
-	static Log logger = LogFactory.getLog(GuiStarter.class);
+	static Log log = LogFactory.getLog(GuiStarter.class);
 	private boolean enableDebug = true;
 	// 非常重要的成员
 	Connection connection;
@@ -48,7 +48,7 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 	static Map<String, ChatWindow> chatWindowMap;// key:username,value:对应的chatWindow
 	Collection<Message> incomingMsgCollection;
 	boolean isQuit = false;
-	private Shell shell;
+	private Shell topShell;
 	private boolean hasFileTransferRequest;
 	
 	//FIXME 简单实现一个传输文件对话框
@@ -63,14 +63,14 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 	
 	//TODO dirty hack
 	public static void deleteChatWindow(String username){
-		logger.debug("");
+//		log.debug("");
 		if(chatWindowMap.containsKey(username)){
 			chatWindowMap.remove(username);
 		}
 	}
 
 	public GuiStarter(boolean debug) {
-		logger.debug("");
+//		log.debug("");
 		enableDebug = debug;
 		chatWindowMap = new java.util.concurrent.ConcurrentHashMap<String, ChatWindow>();
 		incomingMsgCollection = new java.util.concurrent.CopyOnWriteArrayList<Message>();
@@ -84,7 +84,7 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 			LoginWindow loginWindow = new LoginWindow(true, "mick", "mick",
 					"localhost");
 			loginWindow.addLoginListener(new LoginHandler(loginWindow));
-			logger.info("call loginWindow");
+//			log.info("call loginWindow");
 			loginWindow.open();
 			
 		} catch (Exception e) {
@@ -98,27 +98,32 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 		conversation.setIncomingMsgListener(this);
 		presenceManager = new PresenceManager(connection);
 		transferManager = new TransferManager(connection, this);
-		MainWindow mainWindow = new MainWindow(connection.getUser(), username,
-				rosterManager.getRoster(),this);
+//		MainWindow mainWindow = new MainWindow(connection.getUser(), username,
+//				rosterManager.getRoster(),this);
+		Display.getDefault().syncExec(new MainWindowBuilder(this));
 		
-		shell = mainWindow.open();
+//		shell = mainWindow.open();
 		Display display = Display.getDefault();
 		//多线程问题产生点
-		while (!shell.isDisposed()) {
-			if (!display.readAndDispatch()&&incomingMsgCollection.isEmpty()&&hasFileTransferRequest==false) {
-				display.sleep();
-			}			
-			else if(incomingMsgCollection.isEmpty()!=true){
-				for (Message msg : incomingMsgCollection) {
-					handleChat(msg);
-				}
-				incomingMsgCollection.clear();
-			}
-			else if(hasFileTransferRequest){
-				createTransferQueryDialog(fileTransferUsername, fileTransferFilename,filesize);
-				hasFileTransferRequest = false;
-			}
+		while (topShell!=null&&!topShell.isDisposed()) {
 			
+//			if (!display.readAndDispatch()&&incomingMsgCollection.isEmpty()&&hasFileTransferRequest==false) {
+////				log.debug("mainWindow:sleep");
+//				display.sleep();
+//			}			
+//			else if(incomingMsgCollection.isEmpty()!=true){
+//				for (Message msg : incomingMsgCollection) {
+//					handleChat(msg);
+//				}
+//				incomingMsgCollection.clear();
+//			}
+//			else if(hasFileTransferRequest){
+//				createTransferQueryDialog(fileTransferUsername, fileTransferFilename,filesize);
+//				hasFileTransferRequest = false;
+//			}
+			if(!display.readAndDispatch()){
+				display.sleep();
+			}
 		}
 		
 //		Socks5Proxy.getSocks5Proxy().stop();		
@@ -242,8 +247,9 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 //				+ msg.getType());		
 		if (type == Type.chat) {
 			// handleChat(msg);
-			incomingMsgCollection.add(msg);
-			Display.getDefault().wake();
+//			incomingMsgCollection.add(msg);
+//			Display.getDefault().wake();
+			Display.getDefault().asyncExec(new CreateChatWindowRunner("TEST", "TEST-JID", new Presence(Presence.Type.unavailable), this));
 
 		} else if (type == Type.error) {
 			handleMsgError(msg);
@@ -325,7 +331,7 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 //		});
 		// Display.getDefault().asyncExec(null);
 		// Display.getDefault().asyncExec(new
-		Display.getCurrent().syncExec(new CreateChatWindowRunner(username,jid,presence,this));
+		Display.getDefault().asyncExec(new CreateChatWindowRunner(username,jid,presence,this));
 	}
 
 	/**
@@ -350,7 +356,7 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 			String statusInfo = presence.getStatus();
 			if(statusInfo == null)
 				statusInfo = "没有设置！";
-			 ChatWindow chatWindow = new ChatWindow(username,jid,null,
+			 ChatWindow chatWindow = new ChatWindow(topShell,username,jid,null,
 			 presence.getType(),
 			 presence.getMode(),statusInfo,listener);
 //			new ChatWindow().open();
@@ -370,7 +376,7 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 	//负责处理MainWindow得到的chat请求
 	public void handleChatRequest(String username, String jid) {
 		ChatWindow chatWindow = getChatWindow(username,jid);
-		chatWindow.getShell().setFocus();
+//		chatWindow.getShell().setFocus();
 	}
 	public ChatWindow getChatWindow(String username, String jid) {
 		ChatWindow chatWindow = chatWindowMap.get(username);
@@ -383,7 +389,7 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 
 	@Override
 	public File handleFileTranserRequest(String username,String filename, long filesize) {
-		logger.debug("username:" + username + "\nfilename:" + filename + "\nsize:" + filesize);
+		log.debug("username:" + username + "\nfilename:" + filename + "\nsize:" + filesize);
 //		boolean accept = createTransferQueryDialog(username,filename,filesize);
 		sendTransferRequest(username,filename,filesize);
 		synchronized (this) {
@@ -393,7 +399,7 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 				e.printStackTrace();
 			}
 		}		
-		logger.debug("toSaveLocation" + toSaveLocation==null?"null":toSaveLocation.getAbsolutePath());
+		log.debug("toSaveLocation" + toSaveLocation==null?"null":toSaveLocation.getAbsolutePath());
 		return toSaveLocation;
 	}
 
@@ -409,7 +415,7 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 	private boolean createTransferQueryDialog(String username, String filename,
 			long filesize) {
 		String msg = username + " send " + filename + "size:" + filesize + "\n"; 
-		boolean accept = MessageDialog.openQuestion(shell,"是否接收文件",msg);
+		boolean accept = MessageDialog.openQuestion(topShell,"是否接收文件",msg);
 		if(accept){
 //			toSaveLocation = new File("/home/cnliuyix/tmp");
 			toSaveLocation = getFileSaveLocation(filename);
@@ -425,13 +431,13 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 		//通过filename创建一个选择保存位置的对话框
 //		String
 		String toSaveFilename =  createFileDialog(filename);
-		logger.debug("filename:" + toSaveFilename);
+		log.debug("filename:" + toSaveFilename);
 		return new File(toSaveFilename);
 	}
 
 	private String createFileDialog(String filename) {
 		// 创建一个文件对话框
-		FileDialog dialog = new FileDialog(shell, SWT.SAVE);
+		FileDialog dialog = new FileDialog(topShell, SWT.SAVE);
 		dialog.setFilterPath(null);
 		if(filename != null && !filename.equals("")){
 			dialog.setFileName(filename);		
@@ -444,6 +450,31 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 
 	@Override
 	public void handleSendMsgRequest(String jid, String msg) {
-		conversation.sendMsg(jid, msg);		
+		conversation.sendMsg(jid, msg);	
+	}
+	
+	private class MainWindowBuilder implements Runnable{
+		
+		ChatRequestListener listener;
+		
+		public MainWindowBuilder(ChatRequestListener listener) {
+			super();
+			this.listener = listener;
+		}
+
+		@Override
+		public void run() {
+			MainWindow mainWindow = new MainWindow(connection.getUser(), username,
+					rosterManager.getRoster(),listener);
+			topShell = mainWindow.open();
+//			Display display = Display.getDefault();
+//			//多线程问题产生点
+//			while (!shell.isDisposed()) {
+//				if(!display.readAndDispatch()){
+//					display.sleep();
+//				}
+//			}
+		}
+		
 	}
 }

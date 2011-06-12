@@ -23,10 +23,10 @@ public class SendMsgWindow {
 	private Text recvTxt;
 	private Text msgContentTxt;
 	private ChatRequestListener listener;
+	private Shell topShell;
 	
 	
-	
-	public SendMsgWindow(ChatRequestListener listener) {
+	public SendMsgWindow(Shell topShell,ChatRequestListener listener) {
 		super();
 		this.listener = listener;
 	}
@@ -37,7 +37,7 @@ public class SendMsgWindow {
 	 */
 	public static void main(String[] args) {
 		try {
-			SendMsgWindow window = new SendMsgWindow(null);
+			SendMsgWindow window = new SendMsgWindow(null,null);
 			Shell sendMsgWindowShell = window.open();
 			while(sendMsgWindowShell.isDisposed()!=true){
 				if(Display.getCurrent().readAndDispatch()!=true){
@@ -53,11 +53,14 @@ public class SendMsgWindow {
 	 * Open the window.
 	 */
 	public Shell open() {
-		Display display = Display.getDefault();
-		shell = new Shell(display,SWT.SYSTEM_MODAL | SWT.SHELL_TRIM);
+		if(topShell == null){
+			Display display = Display.getDefault();
+			shell = new Shell(display,SWT.SHELL_TRIM);
+		}
+		else
+			shell = new Shell(topShell,SWT.SHELL_TRIM);
 		shell.setSize(450, 300);
 		shell.setText("发送消息");
-
 		createContents();
 		shell.open();
 		shell.layout();
@@ -136,6 +139,7 @@ public class SendMsgWindow {
 			public void widgetSelected(SelectionEvent e) {
 				super.widgetSelected(e);
 				sendMsg();
+				shell.dispose();
 			}
 			
 		});
