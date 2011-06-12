@@ -6,11 +6,7 @@ package com.liuyix.xmpp;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -25,9 +21,6 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.Message.Type;
-import org.jivesoftware.smackx.bytestreams.socks5.Socks5BytestreamManager;
-import org.jivesoftware.smackx.bytestreams.socks5.Socks5Proxy;
-import org.jivesoftware.smackx.pubsub.PresenceState;
 
 import com.liuyix.xmpp.ui.ChatWindow;
 import com.liuyix.xmpp.ui.LoginListener;
@@ -38,7 +31,7 @@ import com.liuyix.xmpp.ui.MainWindow;
  * @author cnliuyix
  * 
  */
-public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatRequestListener,IncomingFileReqListener {
+public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatRequestListener,IncomingFileReqListener{
 	static Log logger = LogFactory.getLog(GuiStarter.class);
 	private boolean enableDebug = true;
 	// 非常重要的成员
@@ -447,5 +440,10 @@ public class GuiStarter implements IncomingMsgListener,OutgoingMsgListener,ChatR
 //			dialog.setFilterExtensions(new String[]{"*.*"})	;		
 		}
 		return dialog.open();
+	}
+
+	@Override
+	public void handleSendMsgRequest(String jid, String msg) {
+		conversation.sendMsg(jid, msg);		
 	}
 }

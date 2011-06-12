@@ -62,7 +62,8 @@ public class MainWindow {
 	private ChatRequestListener chatReqListener;
 	private ResourceManager resourceManager;
 	
-	public MainWindow(String jid, String username, Roster roster,ChatRequestListener chatReqListener) {
+	public MainWindow(String jid, String username, Roster roster,
+			ChatRequestListener chatReqListener) {
 		super();
 		this.jid = jid;
 		this.username = username;
@@ -169,14 +170,97 @@ public class MainWindow {
 		MenuItem subItem = new MenuItem(menu,SWT.NONE);
 		subItem.setText("设置");
 		
+		subItem = new MenuItem(menu,SWT.NONE);
+		subItem.setText("个人信息");
+		
 		
 		subItem = new MenuItem(menu,SWT.SEPARATOR);
 		
 		subItem = new MenuItem(menu,SWT.NONE);
 		subItem.setText("退出");
 		subItem.addSelectionListener(new SelectionAdapter() {
-			//TODO 菜单项“退出”操作
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.swt.events.SelectionAdapter#widgetSelected(org.eclipse.swt.events.SelectionEvent)
+			 */
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				shell.dispose();				
+			}
 		});
+		
+		item = new MenuItem(menuBar,SWT.CASCADE);
+		item.setText("信息功能");
+		menu = new Menu(shell,SWT.DROP_DOWN);
+		item.setMenu(menu);
+		
+		subItem = new MenuItem(menu,SWT.NONE);
+		subItem.setText("向…发送消息");
+		subItem.addSelectionListener(new SelectionAdapter() {
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.swt.events.SelectionAdapter#widgetSelected(org.eclipse.swt.events.SelectionEvent)
+			 */
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				new SendMsgWindow(chatReqListener).open();		
+			}
+			
+		});
+		
+		
+		subItem = new MenuItem(menu,SWT.NONE);
+		subItem.setText("消息群发");
+		
+		subItem = new MenuItem(menu,SWT.NONE);
+		subItem.setText("传送文件给...");
+		
+		item = new MenuItem(menuBar,SWT.CASCADE);
+		item.setText("联系人管理");
+		menu = new Menu(shell,SWT.DROP_DOWN);
+		item.setMenu(menu);
+		
+		subItem = new MenuItem(menu,SWT.NONE);
+		subItem.setText("添加联系人");
+		subItem.addSelectionListener(new SelectionAdapter() {
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.swt.events.SelectionAdapter#widgetSelected(org.eclipse.swt.events.SelectionEvent)
+			 */
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				
+				super.widgetSelected(e);
+				log.debug("添加联系人");
+			}
+			
+		});
+
+		subItem = new MenuItem(menu,SWT.NONE);
+		subItem.setText("删除联系人");
+		subItem.addSelectionListener(new SelectionAdapter() {
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.swt.events.SelectionAdapter#widgetSelected(org.eclipse.swt.events.SelectionEvent)
+			 */
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				
+				super.widgetSelected(e);
+				log.debug("删除联系人");
+			}
+			
+		});
+		
+		new MenuItem(menu,SWT.SEPARATOR);
+		
+		subItem = new MenuItem(menu,SWT.NONE);
+		subItem.setText("添加组");
+		
+
+		
+		subItem = new MenuItem(menu,SWT.NONE);
+		subItem.setText("删除组");
 	}
 
 	/**
@@ -211,13 +295,16 @@ public class MainWindow {
 //		gridData.widthHint = image.getBounds().width + 10;
 		userImageLbl.setLayoutData(gridData);
 		userImageLbl.setImage(image);
+		userImageLbl.setToolTipText("点击可查看修改您的资料");
 		userImageLbl.addMouseListener(new MouseListener() {			
 			@Override
-			public void mouseUp(MouseEvent e) {				
+			public void mouseUp(MouseEvent e) {
+//				log.debug("mouseUp");
 			}
 			
 			@Override
-			public void mouseDown(MouseEvent e) {				
+			public void mouseDown(MouseEvent e) {
+//				log.debug("mouse down");
 			}
 			
 			@Override

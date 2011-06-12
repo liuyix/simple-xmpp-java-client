@@ -25,6 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.ChatManager;
 import org.jivesoftware.smack.ChatManagerListener;
@@ -65,6 +67,7 @@ import org.jivesoftware.smackx.packet.MUCInitialPresence;
  * 所有的对话管理，包括<strong>chat</strong>,<strong>muc</strong>
  */
 public class ConversationManager {
+	private static Log log = LogFactory.getLog(ConversationManager.class);
 
 
 	public enum Type {
@@ -105,11 +108,7 @@ public class ConversationManager {
 	public ConversationManager(Connection conn) {
 		super();
 		if (conn == null || conn.isAuthenticated() != true) {
-			Util.printErrMsg("Conversation init ERROR:Connection ");
-			if (conn == null)
-				Util.showErrMsg("NULL");
-			else
-				Util.showErrMsg("NOT AUTH");
+			log.error("init ERROR:Connection " + conn == null ? "NULL" : "NOT AUTH");
 			return;
 		}
 		// Connection已通过验证
@@ -129,7 +128,6 @@ public class ConversationManager {
 			@Override
 			public void processPacket(Packet packet) {
 				Message receivedMsg = (Message)packet;
-				Util.showDebugMsg("#incomingMsgListener#" + "recvMsg:" + receivedMsg.getBody());
 				if(incomingMsgListener != null && receivedMsg.getBody()!=null){
 					incomingMsgListener.handleIncomingMsg(receivedMsg.getType(), receivedMsg);
 				}
@@ -162,7 +160,7 @@ public class ConversationManager {
 		if(!checkParam(jid) || !checkParam(text))
 			return;
 		if (!isValidJID(jid)) {
-			Util.showErrMsg("ERROR:JID is not valid.sendMsg");
+			log.error("jid is not valid");
 			return;
 		}
 
@@ -177,7 +175,7 @@ public class ConversationManager {
 				e.printStackTrace();
 			}
 		} else {// 建立chat没有成功
-			Util.showErrMsg("chat建立失败,消息未发送");
+			log.error("chat建立失败,消息未发送");
 		}
 
 	}
@@ -192,12 +190,11 @@ public class ConversationManager {
 		Chat chat = chatManager.createChat(jid, new MessageListener() {
 			@Override
 			public void processMessage(Chat chat, Message msg) {
-				// TODO 未完成：收到消息---未读信息
 				// 应该放入“未读消息”中
-				Util.showDebugMsg("\n"
-								+ chat.getParticipant()
-								+ ":\t"
-								+ msg.getBody());
+//				Util.showDebugMsg("\n"
+//								+ chat.getParticipant()
+//								+ ":\t"
+//								+ msg.getBody());
 			}
 		});
 		// 加入到chatMap
@@ -253,7 +250,8 @@ public class ConversationManager {
 			muc.leave();
 		}
 		else{
-			Util.showErrMsg("MUC NOT Login!");
+//			Util.showErrMsg("MUC NOT Login!");
+			log.error("MUC NOT Login!");
 		}
 	}
 
@@ -265,7 +263,7 @@ public class ConversationManager {
 	 * */
 	public void showChatroomInfo(BufferedWriter writer) {
 		if(writer==null){
-			Util.showErrMsg("showChatRoomInfo:参数不正确");
+			log.error("showChatRoomInfo:参数不正确");
 			return ;
 		}
 		try {
@@ -275,15 +273,15 @@ public class ConversationManager {
 				return;
 			}
 			String info = getFormatChatroomInfo();
-			Util.showDebugMsg("chatroom info:\n" + info);
+			log.debug("chatroom info:\n" + info);
 			writer.append(info);
 			writer.flush();
 		} catch (IOException e) {
 			// TODO showChatroomInfo的输出流异常
-			e.printStackTrace();
+//			e.printStackTrace();
+			log.error(e.getMessage());
 		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
+			log.error(e.getMessage());
 		}
 
 	}
@@ -292,6 +290,7 @@ public class ConversationManager {
 	 * ConversationManager中的功能方法：判断muc是否有效
 	 * @return <code>true</code>已登录
 	 * */
+	//TODO 判断MUC是否是为有效地址
 	private boolean isValid(MultiUserChat muc) {
 		return muc != null && muc.isJoined();
 	}
@@ -328,11 +327,10 @@ public class ConversationManager {
 				muc.sendMessage(msg);
 				return true;
 			} catch (XMPPException e) {
-				// 发送不成功
-				Util.showErrMsg("XMPPError:" + e.getXMPPError().getCode());						
+				// TODO 发送不成功
+				log.error("发送消息失败,发生XMPPEXCEPTION：" + e.getXMPPError().toXML());						
 			} catch (Exception e) {
-				e.printStackTrace();
-				Util.showErrMsg("发送不成功");
+				log.error(e.getMessage());
 			}
 		}
 		return false;
@@ -347,35 +345,33 @@ public class ConversationManager {
 			return false;
 		return true;
 	}
-
-	/**
-	 * 写入聊天记录</br> 自己处理IO异常。
-	 * 
-	 * @param str
-	 *            写入的数据
-	 * @deprecated 用统一的StorageManager负责持久存储
-	 * */
-	private void writeLog(String str) {
-		if (writer == null) {
-			try {
-				writer = new BufferedWriter(new FileWriter(outFile));
-			} catch (IOException e) {
-				// 初始化异常
-				e.printStackTrace();
-				Util.showErrMsg("writer初始化错误,重定向到System.out");
-				// 将writer重定向为System.out
-				writer = new BufferedWriter(new OutputStreamWriter(System.out));
-			}
-		}
-		try {
-			writer.append(str);
-			writer.flush();
-		} catch (IOException e) {
-			// 
-			e.printStackTrace();
-			Util.showErrMsg("writer写入异常！");
-		}
-	}
+//
+//	/**
+//	 * 写入聊天记录</br> 自己处理IO异常。
+//	 * 
+//	 * @param str
+//	 *            写入的数据
+//	 * @deprecated 用统一的StorageManager负责持久存储
+//	 * */
+//	private void writeLog(String str) {
+//		if (writer == null) {
+//			try {
+//				writer = new BufferedWriter(new FileWriter(outFile));
+//			} catch (IOException e){
+//				log.error("writer初始化错误,重定向到System.out",e.getCause());
+//				// 将writer重定向为System.out
+//				writer = new BufferedWriter(new OutputStreamWriter(System.out));
+//			}
+//		}
+//		try {
+//			writer.append(str);
+//			writer.flush();
+//		} catch (IOException e) {
+//			// 
+//			e.printStackTrace();
+//			Util.showErrMsg("writer写入异常！");
+//		}
+//	}
 
 	/**
 	 * 实现了ChatManagerListener接口</br> 用来为每个chat添加一个chatListener，从而保存聊天记录。
@@ -500,7 +496,7 @@ public class ConversationManager {
 			Message msg = (Message) packet;
 			//检测是否会出现debug信息
 			if(packet.getError() != null){
-				Util.showErrMsg("#MUC#:FIND XMPPError!");
+				log.error("#MUC#:FIND XMPPError!");
 			}
 			
 //			if(msg.getBody() != null)

@@ -328,7 +328,7 @@ public class ChatWindow {
 		if(userImage == null){
 			Image userImage = resourceManager.getImage(ResourceManager.default_user_image);
 			Image scaledImage = new Image(Display.getCurrent(),userImage.getImageData().scaledTo(80, 80));
-			userImage.dispose();
+//			userImage.dispose();
 			return scaledImage;
 		}
 		else return userImage;

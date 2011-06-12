@@ -99,6 +99,7 @@ public class LoginWindow {
 		//动态设置顶层shell的大小————根据图片的宽度
 		shlJclient.setSize(logo.getImageData().width,logo.getImageData().height * 2);
 		Label picLable = new Label(shlJclient, SWT.NONE);
+		picLable.setToolTipText("查看图片");
 		picLable.setBackground(SWTResourceManager.getColor(SWT.COLOR_CYAN));
 		picLable.setImage(logo);
 		Composite loginInfo = new Composite(shlJclient, SWT.NONE);
@@ -155,6 +156,7 @@ public class LoginWindow {
 		Button loginButton = new Button(loginInfo, SWT.NONE);
 		loginButton.setLayoutData(new GridData(SWT.FILL,SWT.CENTER,false,true,1,1));
 		loginButton.setText("登录");
+		new Label(loginInfo, SWT.NONE);
 		loginButton.addSelectionListener(new LoginBtnAdapter());
 		
 //		Button registerBtn = new Button(loginInfo,SWT.PUSH);
